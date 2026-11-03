@@ -204,7 +204,8 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt=d=>d?`${d.slice(0,4)}/${d.slice(4,6)}/${d.slice(6,8)}`:"";
 const ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
-const TODAY=ymd(new Date()), SOON=ymd(new Date(Date.now()+3*864e5));
+const TODAY=ymd(new Date()), SOON=ymd(new Date(Date.now()+3*864e5)), RED=ymd(new Date(Date.now()+15*864e5));
+const daysLeft=d=>Math.round((new Date(+d.slice(0,4),+d.slice(4,6)-1,+d.slice(6,8))-new Date(+TODAY.slice(0,4),+TODAY.slice(4,6)-1,+TODAY.slice(6,8)))/864e5);
 const dlv=t=>String(t.deadline||"").replace(/\D/g,"").slice(0,8);
 const isOther=t=>t.industries.includes("未分類");
 const isSoon=t=>dlv(t)>=TODAY&&dlv(t)<=SOON;
@@ -254,7 +255,8 @@ function render(){
   const rows=vrows.filter(t=>!ind.size||t.industries.some(i=>ind.has(i))).sort(sorter);
   $("#count").textContent=`${rows.length.toLocaleString()} 筆標案`;
   if(!rows.length){$("#rows").innerHTML=`<div class="blank"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.25 2a8.25 8.25 0 0 1 6.34 13.53l5.69 5.69a.75.75 0 1 1-1.06 1.06l-5.69-5.69A8.25 8.25 0 1 1 10.25 2ZM3.5 10.25a6.75 6.75 0 1 0 13.5 0 6.75 6.75 0 0 0-13.5 0Z"/></svg><h3>沒有符合條件的標案</h3><p class="muted">換個關鍵字、切換上方分頁，或清除篩選再試一次。</p><button class="btn" type="button" onclick="resetAll()">清除所有篩選</button></div>`;return}
-  const dl=t=>{const d=dlv(t);if(!d)return esc(t.deadline);const cls=d<TODAY?"late":(d<=SOON?"soon":"");return`<span class="${cls}">${fmt(d)}</span>`};
+  const dl=t=>{const d=dlv(t);if(!d)return esc(t.deadline);if(d<TODAY)return`<span class="late">${fmt(d)}</span>`;
+    const n=daysLeft(d);return n<15?`<span class="soon">${fmt(d)}<br><small>剩 ${n} 天</small></span>`:`${fmt(d)}<br><small class="muted">剩 ${n} 天</small>`};
   $("#rows").innerHTML=`<div class="tw"><table><thead><tr>${COLS.map(([k,h])=>`<th data-k="${k}" scope="col" aria-sort="${sortKey===k?(sortDir>0?"ascending":"descending"):"none"}">${h}${sortKey===k?(sortDir>0?" ↑":" ↓"):""}</th>`).join("")}</tr></thead><tbody>`+
     rows.slice(0,500).map(t=>`<tr>
     <td>${esc(t.unit_name)}</td>
