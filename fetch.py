@@ -97,8 +97,13 @@ def doc_buy(t):
     return "免費"
 
 
+DEADLINE = [float("inf")]
+
+
 def enrich(t):
-    """只對有命中關注行業的案子抓詳細資料，避免一天上千次呼叫。"""
+    """只對有命中關注行業的案子抓詳細資料，避免一天上千次呼叫。超過時間預算就留到下次。"""
+    if time.time() > DEADLINE[0]:
+        return
     try:
         res = get("tender", unit_id=t["unit_id"], job_number=t["job_number"])
     except Exception as e:
@@ -122,6 +127,7 @@ def main():
     ap.add_argument("--days", type=int, default=3)
     ap.add_argument("--date", help="YYYYMMDD，只抓這一天")
     ap.add_argument("--max-detail", type=int, default=150, help="每次最多補抓幾筆詳細資料")
+    ap.add_argument("--time-budget", type=int, default=1200, help="補抓詳細資料最多花幾秒")
     ap.add_argument("--keep-days", type=int, default=90, help="網頁保留幾天的資料")
     a = ap.parse_args()
 
@@ -157,6 +163,7 @@ def main():
     todo.sort(key=lambda t: t["date"] or "", reverse=True)
     todo = todo[:a.max_detail]
     print(f"補抓詳細資料 {len(todo)} 筆", file=sys.stderr)
+    DEADLINE[0] = time.time() + a.time_budget
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(2) as ex:
         list(ex.map(enrich, todo))

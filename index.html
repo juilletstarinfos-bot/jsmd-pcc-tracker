@@ -111,7 +111,7 @@ thead th:hover{color:var(--fg)}
 tbody tr:hover{background:var(--row-hover)}
 td.n{white-space:nowrap}td{min-width:84px}td:first-child{min-width:150px}
 td.t{min-width:300px}
-td.t a{color:var(--fg);font-weight:600}td.t a:hover{color:var(--accent)}
+td.t a{color:var(--accent);font-weight:600}td.t a:hover{text-decoration:underline}td.t a::after{content:" ↗";font-weight:400;font-size:11px}
 td.t .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .lbl{display:inline-block;padding:0 7px;border:1px solid transparent;border-radius:999px;font-size:12px;font-weight:500;line-height:18px;white-space:nowrap;margin:0 4px 4px 0}
 .st-預計提案{color:var(--success);background:var(--success-subtle);border-color:var(--success)}
@@ -261,7 +261,7 @@ function render(){
     <td class="n num">${esc(t.job_number)}</td>
     <td class="n">${esc(region(t))}</td>
     <td>${t.industries.map(i=>`<span class="lbl" style="${lblStyle(indColor[i]||"#59636e")}">${esc(i==="未分類"?"其他":i)}</span>`).join("")}</td>
-    <td class="t">${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">${esc(t.title)}</a>`:`<strong>${esc(t.title)}</strong>`}${t.category?`<span class="sub">${esc(t.category)}</span>`:""}</td>
+    <td class="t">${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">${esc(t.title)}</a>`:`<strong>${esc(t.title)}</strong><span class="sub">原始公告連結整理中，下次更新會補上</span>`}${t.category?`<span class="sub">${esc(t.category)}</span>`:""}</td>
     <td class="n num">${fmt(t.date)}</td>
     <td class="n num">${dl(t)}</td>
     <td>${esc(t.method||t.type)}</td>

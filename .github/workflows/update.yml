@@ -15,7 +15,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -25,8 +25,8 @@ jobs:
         with: { python-version: "3.12" }
       - name: 抓取並分類
         if: github.event_name != 'push'
-        run: python fetch.py --days 3 --max-detail 200
-        timeout-minutes: 15
+        run: python fetch.py --days 3 --max-detail 500
+        timeout-minutes: 30
         env:
           OPENFUN_TOKEN: ${{ secrets.OPENFUN_TOKEN }}
       # 之後的 LINE 幫手：在這裡加一步，把新命中的標案推播到 LINE
