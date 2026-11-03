@@ -125,6 +125,9 @@ def enrich(t):
         t[f] = pick(detail, needles)
     t["doc_buy"] = doc_buy(t)
     t["deadline"] = roc_date(t.get("deadline"))
+    if "決標" in (t.get("type") or ""):        # 決標公告的公告日是「決標公告日期」
+        t["pub_date"] = pick(detail, ["決標公告日期"]) or t.get("pub_date")
+    t["pub_v"] = 2
     pd = roc_date(t.get("pub_date"))
     t["pub_date"] = pd[:8] if pd and str(pd)[:8].isdigit() else None
     if detail.get("url"):
@@ -163,8 +166,8 @@ def main():
             t = normalize(r)
             t["industries"] = classify(t, rules)
             old = existing.get(t["id"])
-            if old and "pub_date" in old:          # 已抓過詳細資料就沿用
-                t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url", "doc_buy"]})
+            if old and "pub_date" in old and ("決標" not in (t["type"] or "") or old.get("pub_v") == 2):  # 已抓過就沿用
+                t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url", "doc_buy", "pub_v"]})
             elif t["industries"] != ["未分類"]:
                 todo.append(t)
             existing[t["id"]] = t
