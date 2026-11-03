@@ -122,9 +122,13 @@ def main():
             existing[t["id"]] = t
 
     rules = load_rules()
-    budget = [a.max_detail]                    # 每次執行最多補抓幾筆詳細資料，其餘下次再補
+    todo = []
     for d in dates:
-        res = get("listbydate", date=d)
+        try:
+            res = get("listbydate", date=d)
+        except Exception as e:             # 某天 API 出錯就跳過，不要讓整次更新失敗
+            print(f"{d}: 讀取失敗，略過（{e}）", file=sys.stderr)
+            continue
         recs = res.get("records") or []
         print(f"{d}: {len(recs)} 筆", file=sys.stderr)
         for r in recs:
@@ -133,10 +137,17 @@ def main():
             old = existing.get(t["id"])
             if old and "doc_fee" in old:           # 已抓過詳細資料就沿用
                 t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url", "doc_buy"]})
-            elif t["industries"] != ["未分類"] and "決標" not in (t["type"] or "") and budget[0] > 0:
-                budget[0] -= 1
-                enrich(t)
+            elif t["industries"] != ["未分類"] and "決標" not in (t["type"] or ""):
+                todo.append(t)
             existing[t["id"]] = t
+
+    # 補抓詳細資料：最新的優先，每次最多 max_detail 筆，3 條連線並行
+    todo.sort(key=lambda t: t["date"] or "", reverse=True)
+    todo = todo[:a.max_detail]
+    print(f"補抓詳細資料 {len(todo)} 筆", file=sys.stderr)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(3) as ex:
+        list(ex.map(enrich, todo))
 
     cutoff = (today - dt.timedelta(a.keep_days)).strftime("%Y%m%d")
     tenders = sorted((t for t in existing.values() if (t["date"] or "") >= cutoff),
