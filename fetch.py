@@ -24,21 +24,22 @@ def get(path, **params):
     req = urllib.request.Request(url, headers={"User-Agent": "pcc-tracker/0.1"})
     if TOKEN:
         req.add_header("Authorization", f"Bearer {TOKEN}")
-    for i in range(3):
+    for i in range(4):
         try:
             with urllib.request.urlopen(req, timeout=20) as r:
                 return json.load(r)
-        except Exception as e:  # 網路不穩時重試
-            if i == 2:
+        except Exception as e:  # 網路不穩或被限流（429）時等一下再試
+            if i == 3:
                 raise
-            time.sleep(2 ** (i + 1))
+            wait = 10 * (i + 1) if getattr(e, "code", None) == 429 else 2 ** (i + 1)
+            time.sleep(wait)
 
 
 def normalize(rec):
     b = rec.get("brief") or {}
     return {
         "id": f"{rec.get('unit_id')}|{rec.get('job_number')}|{rec.get('filename')}",
-        "date": rec.get("date"),
+        "date": str(rec.get("date") or ""),
         "type": b.get("type"),            # 公告類型：公開招標公告、決標公告…
         "title": b.get("title"),
         "category": b.get("category"),    # 標的分類（工程/財物/勞務 + CPC 碼）
@@ -75,6 +76,16 @@ def pick(detail, needles):
     return None
 
 
+def roc_date(v):
+    """民國日期「115/11/20 17:00」→「20261120 17:00」，方便排序與判斷是否快截止。"""
+    import re
+    m = re.match(r"\s*(\d{2,3})/(\d{1,2})/(\d{1,2})(.*)", str(v or ""))
+    if not m:
+        return v
+    y, mo, d, rest = m.groups()
+    return f"{int(y) + 1911}{int(mo):02d}{int(d):02d}{rest}"
+
+
 def doc_buy(t):
     """標書是否需要購買：有文件費且大於 0 → 需購買；文件費 0 → 免費；不明 → None。"""
     fee = t.get("doc_fee")
@@ -100,6 +111,7 @@ def enrich(t):
     for f, needles in DETAIL_FIELDS.items():
         t[f] = pick(detail, needles)
     t["doc_buy"] = doc_buy(t)
+    t["deadline"] = roc_date(t.get("deadline"))
     if detail.get("url"):
         t["pcc_url"] = detail["url"]
     time.sleep(0.5)
@@ -141,12 +153,12 @@ def main():
                 todo.append(t)
             existing[t["id"]] = t
 
-    # 補抓詳細資料：最新的優先，每次最多 max_detail 筆，3 條連線並行
+    # 補抓詳細資料：最新的優先，每次最多 max_detail 筆，2 條連線並行
     todo.sort(key=lambda t: t["date"] or "", reverse=True)
     todo = todo[:a.max_detail]
     print(f"補抓詳細資料 {len(todo)} 筆", file=sys.stderr)
     from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(3) as ex:
+    with ThreadPoolExecutor(2) as ex:
         list(ex.map(enrich, todo))
 
     cutoff = (today - dt.timedelta(a.keep_days)).strftime("%Y%m%d")

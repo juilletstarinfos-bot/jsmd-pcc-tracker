@@ -131,7 +131,7 @@ function filtered(skipInd){
   const cut=`${c.getFullYear()}${String(c.getMonth()+1).padStart(2,"0")}${String(c.getDate()).padStart(2,"0")}`;
   return all.filter(t=>(!ty||t.type===ty)&&(!buy||(t.doc_buy||"").startsWith(buy))&&(days>9000||t.date>=cut)&&
     (!q||[t.title,t.unit_name,t.category,t.job_number,t.contact,t.note,...(t.companies||[])].join(" ").includes(q))&&
-    (skipInd||!ind.size||t.industries.some(i=>ind.has(i))));
+    (skipInd||(!ind.size?!t.industries.includes("未分類"):t.industries.some(i=>ind.has(i)))));
 }
 function render(){
   const base=filtered(true), cnt={};
@@ -142,8 +142,8 @@ function render(){
     const k=[["關注行業標案",focus.length],["最新一天新增",focus.filter(t=>t.date===all.reduce((m,x)=>x.date>m?x.date:m,"")).length],["3 天內截止",focus.filter(t=>dlv(t)>=t0&&dlv(t)<=t3).length],["需購買標書",focus.filter(t=>(t.doc_buy||"").startsWith("需購買")).length]];
     $("#kpis").innerHTML=k.map(([a,b])=>`<div class="kpi"><span class="caption-3 muted">${a}</span><b>${b}</b></div>`).join(""); }
   base.forEach(t=>t.industries.forEach(i=>cnt[i]=(cnt[i]||0)+1));
-  $("#chips").innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
-    `<button class="chip${ind.has(k)?" on":""}" data-k="${esc(k)}">${esc(k)}<b>${v}</b></button>`).join("");
+  $("#chips").innerHTML=Object.entries(cnt).sort((a,b)=>(a[0]==="未分類")-(b[0]==="未分類")||b[1]-a[1]).map(([k,v])=>
+    `<button class="chip${ind.has(k)?" on":""}" data-k="${esc(k)}" aria-pressed="${ind.has(k)}">${esc(k==="未分類"?"其他（非關注行業）":k)}<b>${v}</b></button>`).join("");
   const rows=filtered(false).sort(sorter);
   const today=new Date().toISOString().slice(0,10).replace(/-/g,"");
   const dl=t=>{if(!t.deadline)return"";const d=String(t.deadline).replace(/\D/g,"").slice(0,8);
