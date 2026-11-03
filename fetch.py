@@ -47,7 +47,7 @@ def normalize(rec):
         "unit_name": rec.get("unit_name"),
         "job_number": rec.get("job_number"),
         "companies": (b.get("companies") or {}).get("names", []),
-        "url": "https://pcc-api.openfun.app" + rec["url"] if rec.get("url", "").startswith("/") else rec.get("url"),
+        "url": None,                      # 原始公告連結在補抓詳細資料時取得（pcc_url）
         "api_url": rec.get("tender_api_url"),
     }
 
@@ -160,6 +160,9 @@ def main():
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(2) as ex:
         list(ex.map(enrich, todo))
+
+    for t in existing.values():               # 規則改過時，舊資料也一起重新分類
+        t["industries"] = classify(t, rules)
 
     cutoff = (today - dt.timedelta(a.keep_days)).strftime("%Y%m%d")
     tenders = sorted((t for t in existing.values() if (t["date"] or "") >= cutoff),

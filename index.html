@@ -7,180 +7,286 @@
 <meta name="description" content="自動收集政府電子採購網的招標公告，依星傳禧關注行業分類。">
 <meta property="og:title" content="JSMD 標案追蹤">
 <meta property="og:description" content="政府採購案自動收集與行業分類">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='600'%3E標%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231f6feb'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='600'%3E標%3C/text%3E%3C/svg%3E">
 <style>
-/* 設計系統：參考 elayadesign/ai-design-skills 的視覺規則
-   字體單一家族（Manrope＋中文 Noto Sans TC）、字級只用固定階梯、間距只用 token、背景不用漸層、邊框四邊完整、所有互動元件都有狀態 */
+/* 介面風格：仿開發者平台常見的專業後台樣式（深色頂欄、分頁籤、框線盒、密集表格、彩色標籤） */
 :root{
-  --s25:2px;--s50:4px;--s75:8px;--s100:12px;--s200:16px;--s300:24px;--s400:32px;--s500:40px;--s600:48px;
-  --r-sm:4px;--r-md:6px;--r-lg:8px;--r-xl:12px;--r-2xl:16px;
-  --bg:#F7F7F5;--surface:#FFFFFF;--surface-2:#F1F1EE;--fg:#111111;--muted:#666666;--line:#E4E4E0;
-  --accent:#111111;--accent-fg:#FFFFFF;--focus:#2563EB;
-  --ok-bg:#E3F3E8;--ok-fg:#14532D;--warn-bg:#FCEBCB;--warn-fg:#7A4A00;--info-bg:#E6EBF5;--info-fg:#283B6B;--danger:#C0392B;
-  --h1-from:#000000;--h1-to:#666666;
+  --header-bg:#1f2328;--header-fg:#ffffff;--header-muted:#9198a1;--header-input:#2d333b;--header-line:#3d444d;
+  --canvas:#ffffff;--canvas-subtle:#f6f8fa;--canvas-inset:#f6f8fa;--fg:#1f2328;--muted:#59636e;--line:#d1d9e0;--line-muted:#e6ebf0;
+  --accent:#0969da;--accent-subtle:#ddf4ff;--success:#1a7f37;--success-subtle:#dafbe1;--attention:#9a6700;--attention-subtle:#fff8c5;
+  --danger:#d1242f;--danger-subtle:#ffebe9;--done:#8250df;--done-subtle:#fbefff;--neutral-subtle:#eff2f5;
+  --row-hover:#f6f8fa;--btn:#f6f8fa;--btn-hover:#eff2f5;--btn-primary:#1f883d;--btn-primary-hover:#1c8139;--focus:#0969da;
+  --shadow:0 1px 0 rgba(31,35,40,.04);
 }
 :root[data-theme="dark"]{
-  --bg:#000000;--surface:#181818;--surface-2:#1F1F1F;--fg:#F2F2F2;--muted:#9B9B9B;--line:#313131;
-  --accent:#F2F2F2;--accent-fg:#000000;--focus:#7AA7FF;
-  --ok-bg:#16301F;--ok-fg:#9BE0B0;--warn-bg:#3A2E14;--warn-fg:#F3D48A;--info-bg:#1E2638;--info-fg:#A9BDF0;--danger:#FF7B6B;
-  --h1-from:#FFFFFF;--h1-to:#9B9B9B;
+  --header-bg:#010409;--header-fg:#f0f6fc;--header-muted:#9198a1;--header-input:#0d1117;--header-line:#3d444d;
+  --canvas:#0d1117;--canvas-subtle:#151b23;--canvas-inset:#010409;--fg:#f0f6fc;--muted:#9198a1;--line:#3d444d;--line-muted:#2a313c;
+  --accent:#4493f8;--accent-subtle:#121d2f;--success:#3fb950;--success-subtle:#12261e;--attention:#d29922;--attention-subtle:#272115;
+  --danger:#f85149;--danger-subtle:#25171c;--done:#ab7df8;--done-subtle:#1f1a33;--neutral-subtle:#212830;
+  --row-hover:#151b23;--btn:#212830;--btn-hover:#262c36;--btn-primary:#238636;--btn-primary-hover:#29903b;--focus:#1f6feb;
+  --shadow:none;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#000000;--surface:#181818;--surface-2:#1F1F1F;--fg:#F2F2F2;--muted:#9B9B9B;--line:#313131;
-  --accent:#F2F2F2;--accent-fg:#000000;--focus:#7AA7FF;
-  --ok-bg:#16301F;--ok-fg:#9BE0B0;--warn-bg:#3A2E14;--warn-fg:#F3D48A;--info-bg:#1E2638;--info-fg:#A9BDF0;--danger:#FF7B6B;
-  --h1-from:#FFFFFF;--h1-to:#9B9B9B;
+  --header-bg:#010409;--header-fg:#f0f6fc;--header-muted:#9198a1;--header-input:#0d1117;--header-line:#3d444d;
+  --canvas:#0d1117;--canvas-subtle:#151b23;--canvas-inset:#010409;--fg:#f0f6fc;--muted:#9198a1;--line:#3d444d;--line-muted:#2a313c;
+  --accent:#4493f8;--accent-subtle:#121d2f;--success:#3fb950;--success-subtle:#12261e;--attention:#d29922;--attention-subtle:#272115;
+  --danger:#f85149;--danger-subtle:#25171c;--done:#ab7df8;--done-subtle:#1f1a33;--neutral-subtle:#212830;
+  --row-hover:#151b23;--btn:#212830;--btn-hover:#262c36;--btn-primary:#238636;--btn-primary-hover:#29903b;--focus:#1f6feb;
+  --shadow:none;
 }}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:"Manrope","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
-/* 文字樣式 */
-.heading-3{font-size:36px;line-height:40px;font-weight:600;margin:0;text-wrap:balance;background:linear-gradient(90deg,var(--h1-from),var(--h1-to));-webkit-background-clip:text;background-clip:text;color:transparent}
-.title-4{font-size:14px;line-height:20px;font-weight:500}
-.body-6{font-size:14px;line-height:20px;font-weight:400}
-.caption-3{font-size:12px;line-height:16px;font-weight:600}
-.caption-5{font-size:12px;line-height:16px;font-weight:400}
+html,body{margin:0}
+body{background:var(--canvas);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:14px;line-height:1.5}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--focus);outline-offset:-1px;border-radius:6px}
+.skip{position:absolute;left:-999px;top:8px;z-index:10;background:var(--canvas);color:var(--accent);padding:8px 12px;border:1px solid var(--line);border-radius:6px}
+.skip:focus{left:16px}
 .muted{color:var(--muted)}
-.skip{position:absolute;left:-999px;top:var(--s75);background:var(--accent);color:var(--accent-fg);padding:var(--s75) var(--s100);border-radius:var(--r-lg)}
-.skip:focus{left:var(--s200)}
-.wrap{max-width:1600px;margin:0 auto;padding:0 var(--s200)}
-header.wrap{padding-top:var(--s500);padding-bottom:var(--s300);display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--s200)}
-header p{margin:var(--s75) 0 0;max-width:680px;text-wrap:pretty}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--s100);margin-bottom:var(--s300)}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:var(--s200)}
-.kpi b{display:block;font-size:30px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:var(--s50)}
-.bar{display:flex;flex-wrap:wrap;gap:var(--s75);margin-bottom:var(--s100)}
-input,select,button{font:inherit;color:var(--fg)}
-input,select{height:40px;padding:0 var(--s100);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);transition:border-color .15s}
-input:hover,select:hover{border-color:var(--muted)}
-#q{flex:1 1 260px}
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.chips{display:flex;flex-wrap:wrap;gap:var(--s75);margin-bottom:var(--s200)}
-.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:var(--s50) var(--s100);cursor:pointer;font-size:12px;line-height:16px;font-weight:500;transition:background .15s,transform .1s}
-.chip:hover{background:var(--surface-2)}
-.chip:active{transform:scale(.98)}
-.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.chip b{font-weight:600;opacity:.6;margin-left:var(--s50);font-variant-numeric:tabular-nums}
-.btn{height:40px;padding:var(--s75) var(--s100);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);cursor:pointer;font-size:14px;font-weight:600;transition:background .15s,transform .1s}
-.btn:hover{background:var(--surface-2)}.btn:active{transform:scale(.98)}
-main.wrap{padding-bottom:var(--s600)}
-.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-xl);background:var(--surface)}
-table{border-collapse:collapse;min-width:1600px;width:100%}
-th,td{padding:var(--s100);border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.num{font-variant-numeric:tabular-nums}
+
+/* 頂欄 */
+.app-header{background:var(--header-bg);color:var(--header-fg);padding:12px 24px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--header-fg);font-weight:600;font-size:16px;white-space:nowrap}
+.brand:hover{text-decoration:none}
+.logo{width:32px;height:32px;border-radius:6px;background:#1f6feb;color:#fff;display:grid;place-items:center;font-size:15px}
+.brand .sep{color:var(--header-muted);font-weight:400}
+.hsearch{flex:1;max-width:520px;margin-left:auto;position:relative}
+.hsearch input{width:100%;height:32px;padding:0 12px 0 32px;border-radius:6px;border:1px solid var(--header-line);background:var(--header-input);color:var(--header-fg);font:inherit}
+.hsearch input::placeholder{color:var(--header-muted)}
+.hsearch svg{position:absolute;left:10px;top:9px;fill:var(--header-muted)}
+.icon-btn{height:32px;padding:0 10px;border-radius:6px;border:1px solid var(--header-line);background:transparent;color:var(--header-fg);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.icon-btn:hover{background:var(--header-input)}
+
+/* 分頁籤 */
+.subnav{border-bottom:1px solid var(--line);background:var(--canvas);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+.tab{appearance:none;border:0;background:none;font:inherit;color:var(--fg);padding:12px 8px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.tab:hover .tab-in{background:var(--btn-hover)}
+.tab-in{padding:4px 8px;border-radius:6px;display:flex;gap:8px;align-items:center}
+.tab[aria-selected="true"]{border-bottom-color:#fd8c73;font-weight:600}
+.counter{display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;background:var(--neutral-subtle);font-size:12px;line-height:18px;font-weight:500;text-align:center}
+
+/* 主體 */
+.page-head{max-width:1600px;margin:0 auto;padding:24px 24px 0;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.page-head h1{margin:0;font-size:20px;font-weight:600}
+.page-head p{margin:2px 0 0;font-size:12px}
+.flash{max-width:1600px;margin:16px auto 0;padding:0 24px}
+.flash div{border:1px solid var(--attention);background:var(--attention-subtle);border-radius:6px;padding:10px 16px;font-size:13px}
+.layout{max-width:1600px;margin:0 auto;padding:16px 24px 48px;display:grid;grid-template-columns:256px minmax(0,1fr);gap:24px;align-items:start}
+
+/* 側欄 */
+.side h2{font-size:14px;font-weight:600;margin:0 0 8px}
+.side section{padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--line-muted)}
+.side section:last-child{border-bottom:0}
+.filter-list{list-style:none;margin:0;padding:0}
+.filter-item{width:100%;display:flex;align-items:center;gap:8px;padding:5px 8px;border:0;background:none;border-radius:6px;color:var(--fg);font:inherit;text-align:left;cursor:pointer}
+.filter-item:hover{background:var(--btn-hover)}
+.filter-item[aria-pressed="true"]{background:var(--accent-subtle);color:var(--accent);font-weight:600}
+.filter-item .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.filter-item .c{margin-left:auto;color:var(--muted);font-size:12px}
+.side select{width:100%}
+select,.btn{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--btn);color:var(--fg);font:inherit;font-size:13px;font-weight:500;cursor:pointer;box-shadow:var(--shadow)}
+select:hover,.btn:hover{background:var(--btn-hover)}
+.btn:active{transform:translateY(1px)}
+.btn-link{border:0;background:none;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;padding:0}
+.btn-link:hover{text-decoration:underline}
+
+/* 統計 */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:6px;margin-bottom:16px;background:var(--canvas)}
+.stat{padding:12px 16px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0}
+.stat span{font-size:12px;color:var(--muted)}
+.stat b{display:block;font-size:24px;line-height:32px;font-weight:600}
+.stat.warn b{color:var(--danger)}
+
+/* 列表盒 */
+.box{border:1px solid var(--line);border-radius:6px;background:var(--canvas);overflow:hidden}
+.box-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--canvas-subtle);border-bottom:1px solid var(--line)}
+.box-head strong{font-weight:600}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:1700px;font-size:13px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line-muted);text-align:left;vertical-align:top}
 tbody tr:last-child td{border-bottom:0}
-th{position:sticky;top:0;background:var(--surface);font-size:12px;line-height:16px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer;user-select:none}
-th:hover{color:var(--fg)}
-td.n{white-space:nowrap;font-variant-numeric:tabular-nums}td.t{min-width:280px;font-weight:500}td{min-width:90px}
-td a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
-td a:hover{text-decoration-color:var(--fg)}
-tbody tr{transition:background .12s}tbody tr:hover{background:var(--surface-2)}
-.tag,.st{display:inline-block;border-radius:var(--r-md);padding:var(--s25) var(--s75);font-size:12px;line-height:16px;font-weight:500;white-space:nowrap;margin:0 var(--s50) var(--s50) 0}
-.tag{background:var(--surface-2);border:1px solid var(--line)}
-.st-預計提案{background:var(--ok-bg);color:var(--ok-fg)}.st-觀察{background:var(--warn-bg);color:var(--warn-fg)}.st-參考{background:var(--info-bg);color:var(--info-fg)}
-.late{color:var(--muted);text-decoration:line-through}.soon{color:var(--danger);font-weight:600}
-.empty{text-align:center;padding:var(--s600) var(--s200);border:1px solid var(--line);border-radius:var(--r-xl);background:var(--surface)}
-.empty b{display:block;font-size:18px;line-height:28px;font-weight:500;margin-bottom:var(--s75)}
-.note{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--warn-bg);color:var(--warn-fg);padding:var(--s75) var(--s100);margin-top:var(--s100)}
-.err{border:1px solid var(--danger);border-radius:var(--r-lg);color:var(--danger);padding:var(--s100);background:var(--surface)}
-.sk{height:16px;border-radius:var(--r-sm);background:linear-gradient(90deg,var(--surface-2),var(--line),var(--surface-2));background-size:200% 100%;animation:sk 1.2s infinite}
-@keyframes sk{to{background-position:-200% 0}}
-footer.wrap{padding-top:var(--s300);padding-bottom:var(--s400);border-top:1px solid var(--line)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-@media (max-width:640px){.heading-3{font-size:30px;line-height:36px}header.wrap{padding-top:var(--s400)}}
+thead th{position:sticky;top:0;background:var(--canvas-subtle);color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid var(--line)}
+thead th:hover{color:var(--fg)}
+tbody tr:hover{background:var(--row-hover)}
+td.n{white-space:nowrap}td{min-width:84px}td:first-child{min-width:150px}
+td.t{min-width:300px}
+td.t a{color:var(--fg);font-weight:600}td.t a:hover{color:var(--accent)}
+td.t .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.lbl{display:inline-block;padding:0 7px;border:1px solid transparent;border-radius:999px;font-size:12px;font-weight:500;line-height:18px;white-space:nowrap;margin:0 4px 4px 0}
+.st-預計提案{color:var(--success);background:var(--success-subtle);border-color:var(--success)}
+.st-觀察{color:var(--attention);background:var(--attention-subtle);border-color:var(--attention)}
+.st-參考{color:var(--accent);background:var(--accent-subtle);border-color:var(--accent)}
+.st-other{color:var(--muted);border-color:var(--line)}
+.fee-buy{color:var(--done);background:var(--done-subtle);border-color:var(--done)}
+.fee-free{color:var(--success);border-color:var(--line)}
+.late{color:var(--muted);text-decoration:line-through}
+.soon{color:var(--danger);font-weight:600}
+.blank{padding:48px 16px;text-align:center}
+.blank h3{margin:8px 0 4px;font-size:20px;font-weight:600}
+.blank svg{fill:var(--muted)}
+.err{margin:16px;padding:12px 16px;border:1px solid var(--danger);background:var(--danger-subtle);color:var(--danger);border-radius:6px}
+.sk{height:14px;border-radius:4px;background:var(--neutral-subtle);margin:14px 16px;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.5}}
+.more{padding:12px 16px;text-align:center;border-top:1px solid var(--line-muted);font-size:12px}
+footer{border-top:1px solid var(--line);padding:24px;color:var(--muted);font-size:12px;text-align:center}
+:root[data-theme="dark"] .lbl[style]{filter:brightness(1.7) saturate(.9)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lbl[style]{filter:brightness(1.7) saturate(.9)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .app-header{padding:12px 16px;flex-wrap:wrap}
+  .hsearch{order:3;flex-basis:100%;max-width:none}
+  .subnav,.page-head,.flash,.layout{padding-left:16px;padding-right:16px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat:nth-child(3){border-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line)}
+}
 </style>
 </head>
 <body>
 <a class="skip" href="#list">跳到標案列表</a>
-<header class="wrap">
-  <div>
-    <h1 class="heading-3">JSMD 標案追蹤</h1>
-    <p class="body-6 muted" id="meta">載入中</p>
-  </div>
-  <button class="btn" id="theme" type="button" aria-label="切換深色或淺色模式">深色模式</button>
+<header class="app-header">
+  <a class="brand" href="./"><span class="logo">標</span><span>JSMD</span><span class="sep">/</span><span>標案追蹤</span></a>
+  <label class="hsearch">
+    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10.68 11.74a6 6 0 0 1-7.92-8.98 6 6 0 0 1 8.98 7.92l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04ZM11.5 7a4.5 4.5 0 1 0-9 0 4.5 4.5 0 0 0 9 0Z"/></svg>
+    <input id="q" type="search" placeholder="搜尋標案名稱、機關、案號、聯絡人" aria-label="搜尋標案">
+  </label>
+  <button class="icon-btn" id="theme" type="button">深色模式</button>
 </header>
-<section class="wrap kpis" id="kpis" aria-label="統計"></section>
-<section class="wrap" aria-label="篩選">
-  <div class="bar">
-    <input id="q" type="search" placeholder="搜尋標案名稱、機關、聯絡人" aria-label="搜尋">
-    <select id="type" aria-label="公告類型"><option value="">全部公告類型</option></select>
-    <select id="buy" aria-label="標書"><option value="">標書：全部</option><option value="需購買">需購買標書</option><option value="免費">免費領標</option></select>
-    <select id="days" aria-label="日期範圍"><option value="3">近 3 天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="9999" selected>全部日期</option></select>
+<nav class="subnav" role="tablist" aria-label="檢視">
+  <button class="tab" role="tab" data-view="all" aria-selected="true"><span class="tab-in">全部標案 <span class="counter num" id="c-all">0</span></span></button>
+  <button class="tab" role="tab" data-view="new" aria-selected="false"><span class="tab-in">最新一天 <span class="counter num" id="c-new">0</span></span></button>
+  <button class="tab" role="tab" data-view="soon" aria-selected="false"><span class="tab-in">3 天內截止 <span class="counter num" id="c-soon">0</span></span></button>
+  <button class="tab" role="tab" data-view="buy" aria-selected="false"><span class="tab-in">需購買標書 <span class="counter num" id="c-buy">0</span></span></button>
+  <button class="tab" role="tab" data-view="other" aria-selected="false"><span class="tab-in">其他行業 <span class="counter num" id="c-other">0</span></span></button>
+</nav>
+<div class="page-head">
+  <div>
+    <h1>政府採購案</h1>
+    <p class="muted" id="meta">載入中</p>
   </div>
-  <div class="chips" id="chips" role="group" aria-label="行業分類"></div>
-</section>
-<main class="wrap" id="list" tabindex="-1"><div class="tw" style="padding:var(--s200)"><div class="sk"></div><div class="sk" style="margin-top:12px;width:80%"></div><div class="sk" style="margin-top:12px;width:60%"></div></div></main>
-<footer class="wrap caption-5 muted">資料來源：中華民國政府電子採購網，經 g0v 標案資料 API 整理。分類為系統自動判斷，投標前請以採購網公告為準。</footer>
+</div>
+<div class="flash" id="flash" hidden><div id="flash-text"></div></div>
+<div class="layout">
+  <aside class="side" aria-label="篩選">
+    <section>
+      <h2>行業分類</h2>
+      <ul class="filter-list" id="chips"></ul>
+      <button class="btn-link" id="clear-ind" type="button" hidden>清除行業篩選</button>
+    </section>
+    <section>
+      <h2>公告類型</h2>
+      <select id="type" aria-label="公告類型"><option value="">全部公告類型</option></select>
+    </section>
+    <section>
+      <h2>日期範圍</h2>
+      <select id="days" aria-label="日期範圍"><option value="3">近 3 天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="9999" selected>全部日期</option></select>
+    </section>
+    <section>
+      <h2>關於</h2>
+      <p class="muted" style="margin:0;font-size:12px">每天 08:00、14:00、18:00 自動從政府電子採購網收集公告，依關注行業自動分類。投標前請以採購網公告為準。</p>
+    </section>
+  </aside>
+  <main id="list" tabindex="-1">
+    <div class="stats" id="kpis"></div>
+    <div class="box">
+      <div class="box-head"><strong id="count">載入中</strong><span class="muted" style="font-size:12px">點欄位標題可排序</span></div>
+      <div id="rows"><div class="sk"></div><div class="sk" style="width:70%"></div><div class="sk" style="width:50%"></div></div>
+    </div>
+  </main>
+</div>
+<footer>資料來源：中華民國政府電子採購網，經 g0v 標案資料 API 整理 · 分類為系統自動判斷</footer>
 <script>
-let all=[], ind=new Set(), sortKey="date", sortDir=-1;
+let all=[], ind=new Set(), view="all", sortKey="date", sortDir=-1;
 const COLS=[["unit_name","機關名稱"],["status","標案狀態"],["job_number","標案案號"],["location","標案地區"],["industries","標案類別"],["title","標案名稱"],["date","公告日期"],["deadline","截止投標"],["method","招標方式"],["contact","聯絡人"],["phone","聯絡電話"],["fax","傳真"],["email","EMAIL"],["url","標書連結"],["doc_buy","標書費用"],["bond","押標金"],["note","備註"]];
-const sorter=(a,b)=>{const x=String(a[sortKey]??""),y=String(b[sortKey]??"");return x<y?-sortDir:x>y?sortDir:0};
+const PALETTE=["#0969da","#1a7f37","#9a6700","#bc4c00","#cf222e","#8250df","#bf3989","#1b7c83","#57606a","#4d2d00","#0550ae","#116329","#953800","#6639ba","#a40e26"];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt=d=>d?`${d.slice(0,4)}/${d.slice(4,6)}/${d.slice(6,8)}`:"";
-fetch("data/tenders.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
-  all=j.tenders||[];
-  $("#meta").innerHTML=`更新於 ${esc(j.updated_at)}，每天 08:00、14:00、18:00 自動更新`+(j.sample?`<span class="note caption-5" style="display:block">${esc(j.sample)}</span>`:"");
+const ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+const TODAY=ymd(new Date()), SOON=ymd(new Date(Date.now()+3*864e5));
+const dlv=t=>String(t.deadline||"").replace(/\D/g,"").slice(0,8);
+const isOther=t=>t.industries.includes("未分類");
+const isSoon=t=>dlv(t)>=TODAY&&dlv(t)<=SOON;
+const isBuy=t=>(t.doc_buy||"").startsWith("需購買");
+let latest="", indColor={};
+const sorter=(a,b)=>{const x=String(a[sortKey]??""),y=String(b[sortKey]??"");return x<y?-sortDir:x>y?sortDir:0};
+const region=t=>t.location||((t.unit_name||"").match(/^(臺北|台北|新北|桃園|臺中|台中|臺南|台南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|臺東|台東|澎湖|金門|連江)/)||[""])[0];
+const link=t=>t.pcc_url||(String(t.url||"").startsWith("https://web.pcc.gov.tw")?t.url:"");
+const lblStyle=c=>`color:${c};border-color:${c}55;background:${c}14`;
+
+fetch("data/tenders.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(j=>{
+  // 同一案（機關＋案號）可能有多筆公告（更正、延長等），只留一筆：優先有原始連結的、再取最新的
+  const seen=new Map();
+  for(const t of (j.tenders||[]).map(t=>({...t,date:String(t.date||"")}))){
+    const k=(t.unit_name||"")+"|"+(t.job_number||t.id), o=seen.get(k);
+    if(!o||(!!t.pcc_url>!!o.pcc_url)||(!!t.pcc_url===!!o.pcc_url&&t.date>o.date))seen.set(k,t);
+  }
+  all=[...seen.values()];
+  latest=all.reduce((m,t)=>t.date>m?t.date:m,"");
+  [...new Set(all.flatMap(t=>t.industries))].filter(i=>i!=="未分類").sort().forEach((k,i)=>indColor[k]=PALETTE[i%PALETTE.length]);
+  indColor["未分類"]="#59636e";
+  $("#meta").textContent=`更新於 ${(j.updated_at||"—").replace("T"," ")} · 共收集 ${all.length.toLocaleString()} 筆公告`;
+  if(j.sample){$("#flash").hidden=false;$("#flash-text").textContent=j.sample}
   [...new Set(all.map(t=>t.type).filter(Boolean))].sort().forEach(t=>$("#type").insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`));
   render();
-}).catch(e=>{$("#meta").textContent="";$("#list").innerHTML=`<div class="err">資料載入失敗：${esc(e.message||e)}。請稍後重新整理，若持續發生請通知管理者。</div>`});
-function filtered(skipInd){
-  const q=$("#q").value.trim(), ty=$("#type").value, buy=$("#buy").value, days=+$("#days").value;
-  const latest=all.reduce((m,t)=>t.date>m?t.date:m,"");
-  const c=new Date(+latest.slice(0,4),+latest.slice(4,6)-1,+latest.slice(6,8)-days+1);
-  const cut=`${c.getFullYear()}${String(c.getMonth()+1).padStart(2,"0")}${String(c.getDate()).padStart(2,"0")}`;
-  return all.filter(t=>(!ty||t.type===ty)&&(!buy||(t.doc_buy||"").startsWith(buy))&&(days>9000||t.date>=cut)&&
-    (!q||[t.title,t.unit_name,t.category,t.job_number,t.contact,t.note,...(t.companies||[])].join(" ").includes(q))&&
-    (skipInd||(!ind.size?!t.industries.includes("未分類"):t.industries.some(i=>ind.has(i)))));
+}).catch(e=>{$("#meta").textContent="";$("#count").textContent="無法載入";$("#rows").innerHTML=`<div class="err">資料載入失敗（${esc(e.message||e)}）。請稍後重新整理，若持續發生請通知管理者。</div>`});
+
+function base(){
+  const q=$("#q").value.trim(), ty=$("#type").value, days=+$("#days").value;
+  const c=new Date(+latest.slice(0,4),+latest.slice(4,6)-1,+latest.slice(6,8)-days+1), cut=ymd(c);
+  return all.filter(t=>(!ty||t.type===ty)&&(days>9000||t.date>=cut)&&
+    (!q||[t.title,t.unit_name,t.category,t.job_number,t.contact,t.note,...(t.companies||[])].join(" ").includes(q)));
 }
+function inView(t,v){return v==="other"?isOther(t):!isOther(t)&&(v==="all"||(v==="new"&&t.date===latest)||(v==="soon"&&isSoon(t))||(v==="buy"&&isBuy(t)))}
 function render(){
-  const base=filtered(true), cnt={};
-  { const td=new Date(), ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
-    const t0=ymd(td), t3=ymd(new Date(td.getTime()+3*864e5));
-    const focus=all.filter(t=>!t.industries.includes("未分類"));
-    const dlv=t=>String(t.deadline||"").replace(/\D/g,"").slice(0,8);
-    const k=[["關注行業標案",focus.length],["最新一天新增",focus.filter(t=>t.date===all.reduce((m,x)=>x.date>m?x.date:m,"")).length],["3 天內截止",focus.filter(t=>dlv(t)>=t0&&dlv(t)<=t3).length],["需購買標書",focus.filter(t=>(t.doc_buy||"").startsWith("需購買")).length]];
-    $("#kpis").innerHTML=k.map(([a,b])=>`<div class="kpi"><span class="caption-3 muted">${a}</span><b>${b}</b></div>`).join(""); }
-  base.forEach(t=>t.industries.forEach(i=>cnt[i]=(cnt[i]||0)+1));
-  $("#chips").innerHTML=Object.entries(cnt).sort((a,b)=>(a[0]==="未分類")-(b[0]==="未分類")||b[1]-a[1]).map(([k,v])=>
-    `<button class="chip${ind.has(k)?" on":""}" data-k="${esc(k)}" aria-pressed="${ind.has(k)}">${esc(k==="未分類"?"其他（非關注行業）":k)}<b>${v}</b></button>`).join("");
-  const rows=filtered(false).sort(sorter);
-  const today=new Date().toISOString().slice(0,10).replace(/-/g,"");
-  const dl=t=>{if(!t.deadline)return"";const d=String(t.deadline).replace(/\D/g,"").slice(0,8);
-    const cls=d&&d<today?"late":(d&&d<=String(+today+3)?"soon":"");return`<span class="${cls}">${fmt(d)||esc(t.deadline)}</span>`};
-  const region=t=>t.location||((t.unit_name||"").match(/^(臺北|台北|新北|桃園|臺中|台中|臺南|台南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|臺東|台東|澎湖|金門|連江)/)||[""])[0];
-  const link=t=>t.pcc_url||t.doc_url||t.url;
-  $("#list").innerHTML=rows.length?`<div class="tw"><table><thead><tr>${COLS.map(([k,h])=>`<th data-k="${k}">${h}${sortKey===k?(sortDir>0?" ▲":" ▼"):""}</th>`).join("")}</tr></thead><tbody>`+
+  const b=base();
+  for(const v of ["all","new","soon","buy","other"]) $("#c-"+v).textContent=b.filter(t=>inView(t,v)).length.toLocaleString();
+  const focus=all.filter(t=>!isOther(t));
+  const k=[["關注行業標案",focus.length,""],["最新一天新增",focus.filter(t=>t.date===latest).length,""],["3 天內截止",focus.filter(isSoon).length,"warn"],["需購買標書",focus.filter(isBuy).length,""]];
+  $("#kpis").innerHTML=k.map(([a,n,c])=>`<div class="stat ${c}"><span>${a}</span><b class="num">${n.toLocaleString()}</b></div>`).join("");
+  const vrows=b.filter(t=>inView(t,view)), cnt={};
+  vrows.forEach(t=>t.industries.forEach(i=>cnt[i]=(cnt[i]||0)+1));
+  $("#chips").innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+    `<li><button class="filter-item" type="button" data-k="${esc(k)}" aria-pressed="${ind.has(k)}"><span class="dot" style="background:${indColor[k]||"#59636e"}"></span>${esc(k==="未分類"?"其他（非關注行業）":k)}<span class="c num">${v}</span></button></li>`).join("")||`<li class="muted" style="font-size:12px">沒有資料</li>`;
+  $("#clear-ind").hidden=!ind.size;
+  const rows=vrows.filter(t=>!ind.size||t.industries.some(i=>ind.has(i))).sort(sorter);
+  $("#count").textContent=`${rows.length.toLocaleString()} 筆標案`;
+  if(!rows.length){$("#rows").innerHTML=`<div class="blank"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.25 2a8.25 8.25 0 0 1 6.34 13.53l5.69 5.69a.75.75 0 1 1-1.06 1.06l-5.69-5.69A8.25 8.25 0 1 1 10.25 2ZM3.5 10.25a6.75 6.75 0 1 0 13.5 0 6.75 6.75 0 0 0-13.5 0Z"/></svg><h3>沒有符合條件的標案</h3><p class="muted">換個關鍵字、切換上方分頁，或清除篩選再試一次。</p><button class="btn" type="button" onclick="resetAll()">清除所有篩選</button></div>`;return}
+  const dl=t=>{const d=dlv(t);if(!d)return esc(t.deadline);const cls=d<TODAY?"late":(d<=SOON?"soon":"");return`<span class="${cls}">${fmt(d)}</span>`};
+  $("#rows").innerHTML=`<div class="tw"><table><thead><tr>${COLS.map(([k,h])=>`<th data-k="${k}" scope="col" aria-sort="${sortKey===k?(sortDir>0?"ascending":"descending"):"none"}">${h}${sortKey===k?(sortDir>0?" ↑":" ↓"):""}</th>`).join("")}</tr></thead><tbody>`+
     rows.slice(0,500).map(t=>`<tr>
     <td>${esc(t.unit_name)}</td>
-    <td>${t.status?`<span class="st st-${esc(t.status)}">${esc(t.status)}</span>`:""}</td>
-    <td class="n">${esc(t.job_number)}</td>
+    <td>${t.status?`<span class="lbl ${["預計提案","觀察","參考"].includes(t.status)?"st-"+esc(t.status):"st-other"}">${esc(t.status)}</span>`:""}</td>
+    <td class="n num">${esc(t.job_number)}</td>
     <td class="n">${esc(region(t))}</td>
-    <td>${t.industries.map(i=>`<span class="tag">${esc(i)}</span>`).join("")}</td>
-    <td class="t">${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">${esc(t.title)}</a>`:esc(t.title)}</td>
-    <td class="n">${fmt(t.date)}</td>
-    <td class="n">${dl(t)}</td>
+    <td>${t.industries.map(i=>`<span class="lbl" style="${lblStyle(indColor[i]||"#59636e")}">${esc(i==="未分類"?"其他":i)}</span>`).join("")}</td>
+    <td class="t">${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">${esc(t.title)}</a>`:`<strong>${esc(t.title)}</strong>`}${t.category?`<span class="sub">${esc(t.category)}</span>`:""}</td>
+    <td class="n num">${fmt(t.date)}</td>
+    <td class="n num">${dl(t)}</td>
     <td>${esc(t.method||t.type)}</td>
     <td>${esc(t.contact)}</td>
-    <td class="n">${esc(t.phone)}</td>
-    <td class="n">${esc(t.fax)}</td>
+    <td class="n num">${esc(t.phone)}</td>
+    <td class="n num">${esc(t.fax)}</td>
     <td>${t.email?`<a href="mailto:${esc(t.email)}">${esc(t.email)}</a>`:""}</td>
-    <td>${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">開啟</a>`:""}</td>
-    <td class="n">${t.doc_buy?`<span class="st ${t.doc_buy.startsWith("需購買")?"st-觀察":"st-參考"}">${esc(t.doc_buy)}</span>`:""}</td>
-    <td class="n">${esc(t.bond)}</td>
-    <td>${esc(t.note)}</td></tr>`).join("")+`</tbody></table></div>`
-    +(rows.length>500?`<div class="empty">只顯示前 500 筆，請再縮小篩選條件</div>`:"")
-    :`<div class="empty"><b>沒有符合條件的標案</b><span class="body-6 muted">試著清除搜尋字、取消行業篩選，或把日期範圍改成「全部日期」。</span><div style="margin-top:16px"><button class="btn" type="button" onclick="resetAll()">清除所有篩選</button></div></div>`;
+    <td class="n">${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">開啟原始公告</a>`:`<span class="muted" title="下一次排程會補上連結">連結整理中</span>`}</td>
+    <td class="n">${t.doc_buy?`<span class="lbl ${isBuy(t)?"fee-buy":"fee-free"}">${esc(t.doc_buy)}</span>`:""}</td>
+    <td class="n num">${esc(t.bond)}</td>
+    <td>${esc(t.note)}</td></tr>`).join("")+`</tbody></table></div>`+
+    (rows.length>500?`<div class="more muted">只顯示前 500 筆，請用搜尋或篩選縮小範圍</div>`:"");
 }
-$("#chips").onclick=e=>{const k=e.target.closest(".chip")?.dataset.k;if(!k)return;ind.has(k)?ind.delete(k):ind.add(k);render()};
-$("#list").onclick=e=>{const k=e.target.closest("th")?.dataset.k;if(!k)return;sortDir=sortKey===k?-sortDir:-1;sortKey=k;render()};
-function resetAll(){ind.clear();$("#q").value="";$("#type").value="";$("#buy").value="";$("#days").value="9999";render()}
+function resetAll(){ind.clear();$("#q").value="";$("#type").value="";$("#days").value="9999";setView("all")}
+function setView(v){view=v;ind.clear();document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));render()}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>setView(b.dataset.view));
+$("#chips").onclick=e=>{const k=e.target.closest(".filter-item")?.dataset.k;if(!k)return;ind.has(k)?ind.delete(k):ind.add(k);render()};
+$("#clear-ind").onclick=()=>{ind.clear();render()};
+$("#rows").onclick=e=>{const k=e.target.closest("th")?.dataset.k;if(!k)return;sortDir=sortKey===k?-sortDir:-1;sortKey=k;render()};
+["#q","#type","#days"].forEach(s=>$(s).addEventListener("input",render));
 (()=>{const b=$("#theme"),root=document.documentElement;let m=null;try{m=localStorage.getItem("theme")}catch(e){}
  if(m)root.dataset.theme=m;
  const cur=()=>root.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
  const lab=()=>b.textContent=cur()==="dark"?"淺色模式":"深色模式";lab();
  b.onclick=()=>{root.dataset.theme=cur()==="dark"?"light":"dark";try{localStorage.setItem("theme",root.dataset.theme)}catch(e){}lab()};})();
-["#q","#type","#buy","#days"].forEach(s=>$(s).addEventListener("input",render));
 </script>
 </body>
 </html>
