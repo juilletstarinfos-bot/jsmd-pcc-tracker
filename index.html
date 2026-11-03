@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>政府採購案追蹤</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--fg:#1d1d1f;--muted:#6b6b70;--line:#e3e3e0;--accent:#1f5fbf;--chip:#eef2fa}
+@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1d1d20;--fg:#ececec;--muted:#9a9aa0;--line:#2e2e33;--accent:#7aa7ff;--chip:#232a38}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+header{padding:20px 16px 8px;max-width:1600px;margin:auto}h1{margin:0;font-size:22px}
+.meta{color:var(--muted);font-size:13px}
+.bar{max-width:1600px;margin:auto;padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px}
+input,select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+#q{flex:1 1 240px}
+.chips{max-width:1600px;margin:auto;padding:4px 16px;display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:13px}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip b{font-weight:600;opacity:.7;margin-left:4px}
+main{max-width:1600px;margin:auto;padding:8px 16px 40px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+table{border-collapse:collapse;font-size:13px;min-width:1500px;width:100%}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--card);font-weight:600;white-space:nowrap;cursor:pointer}
+td.n{white-space:nowrap}td.t{min-width:280px}td{min-width:90px}td .tag{white-space:nowrap}
+tr:hover td{background:var(--chip)}
+.st{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;white-space:nowrap}
+.st-預計提案{background:#d9f2e3;color:#14532d}.st-觀察{background:#fde9c8;color:#7a4a00}.st-參考{background:#e4e9f5;color:#283b6b}
+.late{color:var(--muted);text-decoration:line-through}.soon{color:#c0392b;font-weight:600}
+.row{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0}
+.row a{color:var(--accent);text-decoration:none;font-weight:600}.row a:hover{text-decoration:underline}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.tag{display:inline-block;background:var(--chip);border-radius:6px;padding:1px 8px;font-size:12px;margin:4px 4px 0 0}
+.empty{color:var(--muted);text-align:center;padding:40px}
+.warn{background:#fff4d6;color:#6b4e00;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
+@media (prefers-color-scheme:dark){.warn{background:#3a3220;color:#f3d48a}}
+</style>
+</head>
+<body>
+<header>
+  <h1>政府採購案追蹤</h1>
+  <div class="meta" id="meta">載入中…</div>
+</header>
+<div class="bar">
+  <input id="q" placeholder="搜尋標案名稱、機關、廠商…">
+  <select id="type"><option value="">全部公告類型</option></select>
+  <select id="days"><option value="3">近 3 天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="9999" selected>全部</option></select>
+</div>
+<div class="chips" id="chips"></div>
+<main id="list"></main>
+<script>
+let all=[], ind=new Set(), sortKey="date", sortDir=-1;
+const COLS=[["unit_name","機關名稱"],["status","標案狀態"],["job_number","標案案號"],["location","標案地區"],["industries","標案類別"],["title","標案名稱"],["date","公告日期"],["deadline","截止投標"],["method","招標方式"],["contact","聯絡人"],["phone","聯絡電話"],["fax","傳真"],["email","EMAIL"],["url","標書連結"],["bond","押標金"],["note","備註"]];
+const sorter=(a,b)=>{const x=String(a[sortKey]??""),y=String(b[sortKey]??"");return x<y?-sortDir:x>y?sortDir:0};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=d=>d?`${d.slice(0,4)}/${d.slice(4,6)}/${d.slice(6,8)}`:"";
+fetch("data/tenders.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
+  all=j.tenders||[];
+  $("#meta").innerHTML=`共 ${all.length} 筆 · 更新於 ${esc(j.updated_at)} · 資料來源：${esc(j.source)}`+(j.sample?`<div class="warn">${esc(j.sample)}</div>`:"");
+  [...new Set(all.map(t=>t.type).filter(Boolean))].sort().forEach(t=>$("#type").insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`));
+  render();
+}).catch(e=>$("#meta").textContent="讀不到 data/tenders.json："+e);
+function filtered(skipInd){
+  const q=$("#q").value.trim(), ty=$("#type").value, days=+$("#days").value;
+  const latest=all.reduce((m,t)=>t.date>m?t.date:m,"");
+  const c=new Date(+latest.slice(0,4),+latest.slice(4,6)-1,+latest.slice(6,8)-days+1);
+  const cut=`${c.getFullYear()}${String(c.getMonth()+1).padStart(2,"0")}${String(c.getDate()).padStart(2,"0")}`;
+  return all.filter(t=>(!ty||t.type===ty)&&(days>9000||t.date>=cut)&&
+    (!q||[t.title,t.unit_name,t.category,t.job_number,t.contact,t.note,...(t.companies||[])].join(" ").includes(q))&&
+    (skipInd||!ind.size||t.industries.some(i=>ind.has(i))));
+}
+function render(){
+  const base=filtered(true), cnt={};
+  base.forEach(t=>t.industries.forEach(i=>cnt[i]=(cnt[i]||0)+1));
+  $("#chips").innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+    `<button class="chip${ind.has(k)?" on":""}" data-k="${esc(k)}">${esc(k)}<b>${v}</b></button>`).join("");
+  const rows=filtered(false).sort(sorter);
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,"");
+  const dl=t=>{if(!t.deadline)return"";const d=String(t.deadline).replace(/\D/g,"").slice(0,8);
+    const cls=d&&d<today?"late":(d&&d<=String(+today+3)?"soon":"");return`<span class="${cls}">${fmt(d)||esc(t.deadline)}</span>`};
+  const region=t=>t.location||((t.unit_name||"").match(/^(臺北|台北|新北|桃園|臺中|台中|臺南|台南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|宜蘭|花蓮|臺東|台東|澎湖|金門|連江)/)||[""])[0];
+  const link=t=>t.pcc_url||t.doc_url||t.url;
+  $("#list").innerHTML=rows.length?`<div class="tw"><table><thead><tr>${COLS.map(([k,h])=>`<th data-k="${k}">${h}${sortKey===k?(sortDir>0?" ▲":" ▼"):""}</th>`).join("")}</tr></thead><tbody>`+
+    rows.slice(0,500).map(t=>`<tr>
+    <td>${esc(t.unit_name)}</td>
+    <td>${t.status?`<span class="st st-${esc(t.status)}">${esc(t.status)}</span>`:""}</td>
+    <td class="n">${esc(t.job_number)}</td>
+    <td class="n">${esc(region(t))}</td>
+    <td>${t.industries.map(i=>`<span class="tag">${esc(i)}</span>`).join("")}</td>
+    <td class="t">${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">${esc(t.title)}</a>`:esc(t.title)}</td>
+    <td class="n">${fmt(t.date)}</td>
+    <td class="n">${dl(t)}</td>
+    <td>${esc(t.method||t.type)}</td>
+    <td>${esc(t.contact)}</td>
+    <td class="n">${esc(t.phone)}</td>
+    <td class="n">${esc(t.fax)}</td>
+    <td>${t.email?`<a href="mailto:${esc(t.email)}">${esc(t.email)}</a>`:""}</td>
+    <td>${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">開啟</a>`:""}</td>
+    <td class="n">${esc(t.bond)}</td>
+    <td>${esc(t.note)}</td></tr>`).join("")+`</tbody></table></div>`
+    +(rows.length>500?`<div class="empty">只顯示前 500 筆，請再縮小條件</div>`:"")
+    :`<div class="empty">沒有符合條件的標案</div>`;
+}
+$("#chips").onclick=e=>{const k=e.target.closest(".chip")?.dataset.k;if(!k)return;ind.has(k)?ind.delete(k):ind.add(k);render()};
+$("#list").onclick=e=>{const k=e.target.closest("th")?.dataset.k;if(!k)return;sortDir=sortKey===k?-sortDir:-1;sortKey=k;render()};
+["#q","#type","#days"].forEach(s=>$(s).addEventListener("input",render));
+</script>
+</body>
+</html>
