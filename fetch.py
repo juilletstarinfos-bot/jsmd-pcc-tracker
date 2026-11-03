@@ -24,12 +24,12 @@ def get(path, **params):
     req = urllib.request.Request(url, headers={"User-Agent": "pcc-tracker/0.1"})
     if TOKEN:
         req.add_header("Authorization", f"Bearer {TOKEN}")
-    for i in range(4):
+    for i in range(3):
         try:
-            with urllib.request.urlopen(req, timeout=60) as r:
+            with urllib.request.urlopen(req, timeout=20) as r:
                 return json.load(r)
         except Exception as e:  # 網路不穩時重試
-            if i == 3:
+            if i == 2:
                 raise
             time.sleep(2 ** (i + 1))
 
@@ -109,6 +109,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--days", type=int, default=3)
     ap.add_argument("--date", help="YYYYMMDD，只抓這一天")
+    ap.add_argument("--max-detail", type=int, default=150, help="每次最多補抓幾筆詳細資料")
     ap.add_argument("--keep-days", type=int, default=90, help="網頁保留幾天的資料")
     a = ap.parse_args()
 
@@ -121,6 +122,7 @@ def main():
             existing[t["id"]] = t
 
     rules = load_rules()
+    budget = [a.max_detail]                    # 每次執行最多補抓幾筆詳細資料，其餘下次再補
     for d in dates:
         res = get("listbydate", date=d)
         recs = res.get("records") or []
@@ -131,7 +133,8 @@ def main():
             old = existing.get(t["id"])
             if old and "doc_fee" in old:           # 已抓過詳細資料就沿用
                 t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url", "doc_buy"]})
-            elif t["industries"] != ["未分類"] and "決標" not in (t["type"] or ""):
+            elif t["industries"] != ["未分類"] and "決標" not in (t["type"] or "") and budget[0] > 0:
+                budget[0] -= 1
                 enrich(t)
             existing[t["id"]] = t
 
