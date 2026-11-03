@@ -62,7 +62,8 @@ DETAIL_FIELDS = {
     "bond": ["押標金額度", "押標金"],
     "budget": ["預算金額"],
     "location": ["履約地點"],
-    "doc_url": ["電子領標", "領標網址"],
+    "doc_fee": ["機關文件費", "文件費", "領標費", "標書費"],   # 標書（招標文件）費用
+    "e_tender": ["是否提供電子領標"],
 }
 
 
@@ -72,6 +73,17 @@ def pick(detail, needles):
             if n in k.split(":")[-1] and v not in (None, "", []):
                 return v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
     return None
+
+
+def doc_buy(t):
+    """標書是否需要購買：有文件費且大於 0 → 需購買；文件費 0 → 免費；不明 → None。"""
+    fee = t.get("doc_fee")
+    if fee is None:
+        return None
+    digits = "".join(ch for ch in str(fee) if ch.isdigit())
+    if digits and int(digits) > 0:
+        return f"需購買 NT${int(digits):,}"
+    return "免費"
 
 
 def enrich(t):
@@ -87,6 +99,7 @@ def enrich(t):
     detail = recs[-1].get("detail") or {}
     for f, needles in DETAIL_FIELDS.items():
         t[f] = pick(detail, needles)
+    t["doc_buy"] = doc_buy(t)
     if detail.get("url"):
         t["pcc_url"] = detail["url"]
     time.sleep(0.5)
@@ -116,8 +129,8 @@ def main():
             t = normalize(r)
             t["industries"] = classify(t, rules)
             old = existing.get(t["id"])
-            if old and "deadline" in old:          # 已抓過詳細資料就沿用
-                t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url"]})
+            if old and "doc_fee" in old:           # 已抓過詳細資料就沿用
+                t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url", "doc_buy"]})
             elif t["industries"] != ["未分類"] and "決標" not in (t["type"] or ""):
                 enrich(t)
             existing[t["id"]] = t

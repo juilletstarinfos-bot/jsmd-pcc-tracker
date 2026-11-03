@@ -44,13 +44,14 @@ tr:hover td{background:var(--chip)}
 <div class="bar">
   <input id="q" placeholder="搜尋標案名稱、機關、廠商…">
   <select id="type"><option value="">全部公告類型</option></select>
+  <select id="buy"><option value="">標書：全部</option><option value="需購買">需購買標書</option><option value="免費">免費領標</option></select>
   <select id="days"><option value="3">近 3 天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="9999" selected>全部</option></select>
 </div>
 <div class="chips" id="chips"></div>
 <main id="list"></main>
 <script>
 let all=[], ind=new Set(), sortKey="date", sortDir=-1;
-const COLS=[["unit_name","機關名稱"],["status","標案狀態"],["job_number","標案案號"],["location","標案地區"],["industries","標案類別"],["title","標案名稱"],["date","公告日期"],["deadline","截止投標"],["method","招標方式"],["contact","聯絡人"],["phone","聯絡電話"],["fax","傳真"],["email","EMAIL"],["url","標書連結"],["bond","押標金"],["note","備註"]];
+const COLS=[["unit_name","機關名稱"],["status","標案狀態"],["job_number","標案案號"],["location","標案地區"],["industries","標案類別"],["title","標案名稱"],["date","公告日期"],["deadline","截止投標"],["method","招標方式"],["contact","聯絡人"],["phone","聯絡電話"],["fax","傳真"],["email","EMAIL"],["url","標書連結"],["doc_buy","標書費用"],["bond","押標金"],["note","備註"]];
 const sorter=(a,b)=>{const x=String(a[sortKey]??""),y=String(b[sortKey]??"");return x<y?-sortDir:x>y?sortDir:0};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -62,11 +63,11 @@ fetch("data/tenders.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   render();
 }).catch(e=>$("#meta").textContent="讀不到 data/tenders.json："+e);
 function filtered(skipInd){
-  const q=$("#q").value.trim(), ty=$("#type").value, days=+$("#days").value;
+  const q=$("#q").value.trim(), ty=$("#type").value, buy=$("#buy").value, days=+$("#days").value;
   const latest=all.reduce((m,t)=>t.date>m?t.date:m,"");
   const c=new Date(+latest.slice(0,4),+latest.slice(4,6)-1,+latest.slice(6,8)-days+1);
   const cut=`${c.getFullYear()}${String(c.getMonth()+1).padStart(2,"0")}${String(c.getDate()).padStart(2,"0")}`;
-  return all.filter(t=>(!ty||t.type===ty)&&(days>9000||t.date>=cut)&&
+  return all.filter(t=>(!ty||t.type===ty)&&(!buy||(t.doc_buy||"").startsWith(buy))&&(days>9000||t.date>=cut)&&
     (!q||[t.title,t.unit_name,t.category,t.job_number,t.contact,t.note,...(t.companies||[])].join(" ").includes(q))&&
     (skipInd||!ind.size||t.industries.some(i=>ind.has(i))));
 }
@@ -97,6 +98,7 @@ function render(){
     <td class="n">${esc(t.fax)}</td>
     <td>${t.email?`<a href="mailto:${esc(t.email)}">${esc(t.email)}</a>`:""}</td>
     <td>${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">開啟</a>`:""}</td>
+    <td class="n">${t.doc_buy?`<span class="st ${t.doc_buy.startsWith("需購買")?"st-觀察":"st-參考"}">${esc(t.doc_buy)}</span>`:""}</td>
     <td class="n">${esc(t.bond)}</td>
     <td>${esc(t.note)}</td></tr>`).join("")+`</tbody></table></div>`
     +(rows.length>500?`<div class="empty">只顯示前 500 筆，請再縮小條件</div>`:"")
@@ -104,7 +106,7 @@ function render(){
 }
 $("#chips").onclick=e=>{const k=e.target.closest(".chip")?.dataset.k;if(!k)return;ind.has(k)?ind.delete(k):ind.add(k);render()};
 $("#list").onclick=e=>{const k=e.target.closest("th")?.dataset.k;if(!k)return;sortDir=sortKey===k?-sortDir:-1;sortKey=k;render()};
-["#q","#type","#days"].forEach(s=>$(s).addEventListener("input",render));
+["#q","#type","#buy","#days"].forEach(s=>$(s).addEventListener("input",render));
 </script>
 </body>
 </html>
