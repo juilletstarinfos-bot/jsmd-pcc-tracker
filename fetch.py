@@ -155,12 +155,12 @@ def main():
             old = existing.get(t["id"])
             if old and "doc_fee" in old:           # 已抓過詳細資料就沿用
                 t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url", "doc_buy"]})
-            elif t["industries"] != ["未分類"] and "決標" not in (t["type"] or ""):
+            elif t["industries"] != ["未分類"]:
                 todo.append(t)
             existing[t["id"]] = t
 
     # 補抓詳細資料：最新的優先，每次最多 max_detail 筆，2 條連線並行
-    todo.sort(key=lambda t: t["date"] or "", reverse=True)
+    todo.sort(key=lambda t: ("決標" not in (t["type"] or ""), t["date"] or ""), reverse=True)  # 招標公告優先
     todo = todo[:a.max_detail]
     print(f"補抓詳細資料 {len(todo)} 筆", file=sys.stderr)
     DEADLINE[0] = time.time() + a.time_budget
