@@ -3,52 +3,114 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>政府採購案追蹤</title>
+<title>JSMD 標案追蹤</title>
+<meta name="description" content="自動收集政府電子採購網的招標公告，依星傳禧關注行業分類。">
+<meta property="og:title" content="JSMD 標案追蹤">
+<meta property="og:description" content="政府採購案自動收集與行業分類">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='600'%3E標%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f7f7f5;--card:#fff;--fg:#1d1d1f;--muted:#6b6b70;--line:#e3e3e0;--accent:#1f5fbf;--chip:#eef2fa}
-@media (prefers-color-scheme:dark){:root{--bg:#141416;--card:#1d1d20;--fg:#ececec;--muted:#9a9aa0;--line:#2e2e33;--accent:#7aa7ff;--chip:#232a38}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
-header{padding:20px 16px 8px;max-width:1600px;margin:auto}h1{margin:0;font-size:22px}
-.meta{color:var(--muted);font-size:13px}
-.bar{max-width:1600px;margin:auto;padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px}
-input,select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
-#q{flex:1 1 240px}
-.chips{max-width:1600px;margin:auto;padding:4px 16px;display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:13px}
-.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.chip b{font-weight:600;opacity:.7;margin-left:4px}
-main{max-width:1600px;margin:auto;padding:8px 16px 40px}
-.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card)}
-table{border-collapse:collapse;font-size:13px;min-width:1500px;width:100%}
-th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{position:sticky;top:0;background:var(--card);font-weight:600;white-space:nowrap;cursor:pointer}
-td.n{white-space:nowrap}td.t{min-width:280px}td{min-width:90px}td .tag{white-space:nowrap}
-tr:hover td{background:var(--chip)}
-.st{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;white-space:nowrap}
-.st-預計提案{background:#d9f2e3;color:#14532d}.st-觀察{background:#fde9c8;color:#7a4a00}.st-參考{background:#e4e9f5;color:#283b6b}
-.late{color:var(--muted);text-decoration:line-through}.soon{color:#c0392b;font-weight:600}
-.row{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0}
-.row a{color:var(--accent);text-decoration:none;font-weight:600}.row a:hover{text-decoration:underline}
-.sub{color:var(--muted);font-size:13px;margin-top:2px}
-.tag{display:inline-block;background:var(--chip);border-radius:6px;padding:1px 8px;font-size:12px;margin:4px 4px 0 0}
-.empty{color:var(--muted);text-align:center;padding:40px}
-.warn{background:#fff4d6;color:#6b4e00;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:13px}
-@media (prefers-color-scheme:dark){.warn{background:#3a3220;color:#f3d48a}}
+/* 設計系統：參考 elayadesign/ai-design-skills 的視覺規則
+   字體單一家族（Manrope＋中文 Noto Sans TC）、字級只用固定階梯、間距只用 token、背景不用漸層、邊框四邊完整、所有互動元件都有狀態 */
+:root{
+  --s25:2px;--s50:4px;--s75:8px;--s100:12px;--s200:16px;--s300:24px;--s400:32px;--s500:40px;--s600:48px;
+  --r-sm:4px;--r-md:6px;--r-lg:8px;--r-xl:12px;--r-2xl:16px;
+  --bg:#F7F7F5;--surface:#FFFFFF;--surface-2:#F1F1EE;--fg:#111111;--muted:#666666;--line:#E4E4E0;
+  --accent:#111111;--accent-fg:#FFFFFF;--focus:#2563EB;
+  --ok-bg:#E3F3E8;--ok-fg:#14532D;--warn-bg:#FCEBCB;--warn-fg:#7A4A00;--info-bg:#E6EBF5;--info-fg:#283B6B;--danger:#C0392B;
+  --h1-from:#000000;--h1-to:#666666;
+}
+:root[data-theme="dark"]{
+  --bg:#000000;--surface:#181818;--surface-2:#1F1F1F;--fg:#F2F2F2;--muted:#9B9B9B;--line:#313131;
+  --accent:#F2F2F2;--accent-fg:#000000;--focus:#7AA7FF;
+  --ok-bg:#16301F;--ok-fg:#9BE0B0;--warn-bg:#3A2E14;--warn-fg:#F3D48A;--info-bg:#1E2638;--info-fg:#A9BDF0;--danger:#FF7B6B;
+  --h1-from:#FFFFFF;--h1-to:#9B9B9B;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#000000;--surface:#181818;--surface-2:#1F1F1F;--fg:#F2F2F2;--muted:#9B9B9B;--line:#313131;
+  --accent:#F2F2F2;--accent-fg:#000000;--focus:#7AA7FF;
+  --ok-bg:#16301F;--ok-fg:#9BE0B0;--warn-bg:#3A2E14;--warn-fg:#F3D48A;--info-bg:#1E2638;--info-fg:#A9BDF0;--danger:#FF7B6B;
+  --h1-from:#FFFFFF;--h1-to:#9B9B9B;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Manrope","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
+/* 文字樣式 */
+.heading-3{font-size:36px;line-height:40px;font-weight:600;margin:0;text-wrap:balance;background:linear-gradient(90deg,var(--h1-from),var(--h1-to));-webkit-background-clip:text;background-clip:text;color:transparent}
+.title-4{font-size:14px;line-height:20px;font-weight:500}
+.body-6{font-size:14px;line-height:20px;font-weight:400}
+.caption-3{font-size:12px;line-height:16px;font-weight:600}
+.caption-5{font-size:12px;line-height:16px;font-weight:400}
+.muted{color:var(--muted)}
+.skip{position:absolute;left:-999px;top:var(--s75);background:var(--accent);color:var(--accent-fg);padding:var(--s75) var(--s100);border-radius:var(--r-lg)}
+.skip:focus{left:var(--s200)}
+.wrap{max-width:1600px;margin:0 auto;padding:0 var(--s200)}
+header.wrap{padding-top:var(--s500);padding-bottom:var(--s300);display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--s200)}
+header p{margin:var(--s75) 0 0;max-width:680px;text-wrap:pretty}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--s100);margin-bottom:var(--s300)}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:var(--s200)}
+.kpi b{display:block;font-size:30px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:var(--s50)}
+.bar{display:flex;flex-wrap:wrap;gap:var(--s75);margin-bottom:var(--s100)}
+input,select,button{font:inherit;color:var(--fg)}
+input,select{height:40px;padding:0 var(--s100);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);transition:border-color .15s}
+input:hover,select:hover{border-color:var(--muted)}
+#q{flex:1 1 260px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:var(--s75);margin-bottom:var(--s200)}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:var(--s50) var(--s100);cursor:pointer;font-size:12px;line-height:16px;font-weight:500;transition:background .15s,transform .1s}
+.chip:hover{background:var(--surface-2)}
+.chip:active{transform:scale(.98)}
+.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.chip b{font-weight:600;opacity:.6;margin-left:var(--s50);font-variant-numeric:tabular-nums}
+.btn{height:40px;padding:var(--s75) var(--s100);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);cursor:pointer;font-size:14px;font-weight:600;transition:background .15s,transform .1s}
+.btn:hover{background:var(--surface-2)}.btn:active{transform:scale(.98)}
+main.wrap{padding-bottom:var(--s600)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-xl);background:var(--surface)}
+table{border-collapse:collapse;min-width:1600px;width:100%}
+th,td{padding:var(--s100);border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{position:sticky;top:0;background:var(--surface);font-size:12px;line-height:16px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--fg)}
+td.n{white-space:nowrap;font-variant-numeric:tabular-nums}td.t{min-width:280px;font-weight:500}td{min-width:90px}
+td a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+td a:hover{text-decoration-color:var(--fg)}
+tbody tr{transition:background .12s}tbody tr:hover{background:var(--surface-2)}
+.tag,.st{display:inline-block;border-radius:var(--r-md);padding:var(--s25) var(--s75);font-size:12px;line-height:16px;font-weight:500;white-space:nowrap;margin:0 var(--s50) var(--s50) 0}
+.tag{background:var(--surface-2);border:1px solid var(--line)}
+.st-預計提案{background:var(--ok-bg);color:var(--ok-fg)}.st-觀察{background:var(--warn-bg);color:var(--warn-fg)}.st-參考{background:var(--info-bg);color:var(--info-fg)}
+.late{color:var(--muted);text-decoration:line-through}.soon{color:var(--danger);font-weight:600}
+.empty{text-align:center;padding:var(--s600) var(--s200);border:1px solid var(--line);border-radius:var(--r-xl);background:var(--surface)}
+.empty b{display:block;font-size:18px;line-height:28px;font-weight:500;margin-bottom:var(--s75)}
+.note{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--warn-bg);color:var(--warn-fg);padding:var(--s75) var(--s100);margin-top:var(--s100)}
+.err{border:1px solid var(--danger);border-radius:var(--r-lg);color:var(--danger);padding:var(--s100);background:var(--surface)}
+.sk{height:16px;border-radius:var(--r-sm);background:linear-gradient(90deg,var(--surface-2),var(--line),var(--surface-2));background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+footer.wrap{padding-top:var(--s300);padding-bottom:var(--s400);border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:640px){.heading-3{font-size:30px;line-height:36px}header.wrap{padding-top:var(--s400)}}
 </style>
 </head>
 <body>
-<header>
-  <h1>政府採購案追蹤</h1>
-  <div class="meta" id="meta">載入中…</div>
+<a class="skip" href="#list">跳到標案列表</a>
+<header class="wrap">
+  <div>
+    <h1 class="heading-3">JSMD 標案追蹤</h1>
+    <p class="body-6 muted" id="meta">載入中</p>
+  </div>
+  <button class="btn" id="theme" type="button" aria-label="切換深色或淺色模式">深色模式</button>
 </header>
-<div class="bar">
-  <input id="q" placeholder="搜尋標案名稱、機關、廠商…">
-  <select id="type"><option value="">全部公告類型</option></select>
-  <select id="buy"><option value="">標書：全部</option><option value="需購買">需購買標書</option><option value="免費">免費領標</option></select>
-  <select id="days"><option value="3">近 3 天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="9999" selected>全部</option></select>
-</div>
-<div class="chips" id="chips"></div>
-<main id="list"></main>
+<section class="wrap kpis" id="kpis" aria-label="統計"></section>
+<section class="wrap" aria-label="篩選">
+  <div class="bar">
+    <input id="q" type="search" placeholder="搜尋標案名稱、機關、聯絡人" aria-label="搜尋">
+    <select id="type" aria-label="公告類型"><option value="">全部公告類型</option></select>
+    <select id="buy" aria-label="標書"><option value="">標書：全部</option><option value="需購買">需購買標書</option><option value="免費">免費領標</option></select>
+    <select id="days" aria-label="日期範圍"><option value="3">近 3 天</option><option value="7">近 7 天</option><option value="30">近 30 天</option><option value="9999" selected>全部日期</option></select>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="行業分類"></div>
+</section>
+<main class="wrap" id="list" tabindex="-1"><div class="tw" style="padding:var(--s200)"><div class="sk"></div><div class="sk" style="margin-top:12px;width:80%"></div><div class="sk" style="margin-top:12px;width:60%"></div></div></main>
+<footer class="wrap caption-5 muted">資料來源：中華民國政府電子採購網，經 g0v 標案資料 API 整理。分類為系統自動判斷，投標前請以採購網公告為準。</footer>
 <script>
 let all=[], ind=new Set(), sortKey="date", sortDir=-1;
 const COLS=[["unit_name","機關名稱"],["status","標案狀態"],["job_number","標案案號"],["location","標案地區"],["industries","標案類別"],["title","標案名稱"],["date","公告日期"],["deadline","截止投標"],["method","招標方式"],["contact","聯絡人"],["phone","聯絡電話"],["fax","傳真"],["email","EMAIL"],["url","標書連結"],["doc_buy","標書費用"],["bond","押標金"],["note","備註"]];
@@ -58,10 +120,10 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const fmt=d=>d?`${d.slice(0,4)}/${d.slice(4,6)}/${d.slice(6,8)}`:"";
 fetch("data/tenders.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   all=j.tenders||[];
-  $("#meta").innerHTML=`共 ${all.length} 筆 · 更新於 ${esc(j.updated_at)} · 資料來源：${esc(j.source)}`+(j.sample?`<div class="warn">${esc(j.sample)}</div>`:"");
+  $("#meta").innerHTML=`更新於 ${esc(j.updated_at)}，每天 08:00、14:00、18:00 自動更新`+(j.sample?`<span class="note caption-5" style="display:block">${esc(j.sample)}</span>`:"");
   [...new Set(all.map(t=>t.type).filter(Boolean))].sort().forEach(t=>$("#type").insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`));
   render();
-}).catch(e=>$("#meta").textContent="讀不到 data/tenders.json："+e);
+}).catch(e=>{$("#meta").textContent="";$("#list").innerHTML=`<div class="err">資料載入失敗：${esc(e.message||e)}。請稍後重新整理，若持續發生請通知管理者。</div>`});
 function filtered(skipInd){
   const q=$("#q").value.trim(), ty=$("#type").value, buy=$("#buy").value, days=+$("#days").value;
   const latest=all.reduce((m,t)=>t.date>m?t.date:m,"");
@@ -73,6 +135,12 @@ function filtered(skipInd){
 }
 function render(){
   const base=filtered(true), cnt={};
+  { const td=new Date(), ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+    const t0=ymd(td), t3=ymd(new Date(td.getTime()+3*864e5));
+    const focus=all.filter(t=>!t.industries.includes("未分類"));
+    const dlv=t=>String(t.deadline||"").replace(/\D/g,"").slice(0,8);
+    const k=[["關注行業標案",focus.length],["最新一天新增",focus.filter(t=>t.date===all.reduce((m,x)=>x.date>m?x.date:m,"")).length],["3 天內截止",focus.filter(t=>dlv(t)>=t0&&dlv(t)<=t3).length],["需購買標書",focus.filter(t=>(t.doc_buy||"").startsWith("需購買")).length]];
+    $("#kpis").innerHTML=k.map(([a,b])=>`<div class="kpi"><span class="caption-3 muted">${a}</span><b>${b}</b></div>`).join(""); }
   base.forEach(t=>t.industries.forEach(i=>cnt[i]=(cnt[i]||0)+1));
   $("#chips").innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
     `<button class="chip${ind.has(k)?" on":""}" data-k="${esc(k)}">${esc(k)}<b>${v}</b></button>`).join("");
@@ -101,11 +169,17 @@ function render(){
     <td class="n">${t.doc_buy?`<span class="st ${t.doc_buy.startsWith("需購買")?"st-觀察":"st-參考"}">${esc(t.doc_buy)}</span>`:""}</td>
     <td class="n">${esc(t.bond)}</td>
     <td>${esc(t.note)}</td></tr>`).join("")+`</tbody></table></div>`
-    +(rows.length>500?`<div class="empty">只顯示前 500 筆，請再縮小條件</div>`:"")
-    :`<div class="empty">沒有符合條件的標案</div>`;
+    +(rows.length>500?`<div class="empty">只顯示前 500 筆，請再縮小篩選條件</div>`:"")
+    :`<div class="empty"><b>沒有符合條件的標案</b><span class="body-6 muted">試著清除搜尋字、取消行業篩選，或把日期範圍改成「全部日期」。</span><div style="margin-top:16px"><button class="btn" type="button" onclick="resetAll()">清除所有篩選</button></div></div>`;
 }
 $("#chips").onclick=e=>{const k=e.target.closest(".chip")?.dataset.k;if(!k)return;ind.has(k)?ind.delete(k):ind.add(k);render()};
 $("#list").onclick=e=>{const k=e.target.closest("th")?.dataset.k;if(!k)return;sortDir=sortKey===k?-sortDir:-1;sortKey=k;render()};
+function resetAll(){ind.clear();$("#q").value="";$("#type").value="";$("#buy").value="";$("#days").value="9999";render()}
+(()=>{const b=$("#theme"),root=document.documentElement;let m=null;try{m=localStorage.getItem("theme")}catch(e){}
+ if(m)root.dataset.theme=m;
+ const cur=()=>root.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+ const lab=()=>b.textContent=cur()==="dark"?"淺色模式":"深色模式";lab();
+ b.onclick=()=>{root.dataset.theme=cur()==="dark"?"light":"dark";try{localStorage.setItem("theme",root.dataset.theme)}catch(e){}lab()};})();
 ["#q","#type","#buy","#days"].forEach(s=>$(s).addEventListener("input",render));
 </script>
 </body>
