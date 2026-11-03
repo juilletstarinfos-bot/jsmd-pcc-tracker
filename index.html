@@ -218,7 +218,8 @@ const lblStyle=c=>`color:${c};border-color:${c}55;background:${c}14`;
 fetch("data/tenders.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(j=>{
   // 同一案（機關＋案號）可能有多筆公告（更正、延長等），只留一筆：優先有原始連結的、再取最新的
   const seen=new Map();
-  for(const t of (j.tenders||[]).map(t=>({...t,date:String(t.date||"")}))){
+  // 公告日：以採購網公告上的「公告日」為準；還沒取得時才用收錄日期
+  for(const t of (j.tenders||[]).map(t=>({...t,seen_date:String(t.date||""),date:String(t.pub_date||t.date||"")}))){
     const k=(t.unit_name||"")+"|"+(t.job_number||t.id), o=seen.get(k);
     if(!o||(!!t.pcc_url>!!o.pcc_url)||(!!t.pcc_url===!!o.pcc_url&&t.date>o.date))seen.set(k,t);
   }
@@ -262,7 +263,7 @@ function render(){
     <td class="n">${esc(region(t))}</td>
     <td>${t.industries.map(i=>`<span class="lbl" style="${lblStyle(indColor[i]||"#59636e")}">${esc(i==="未分類"?"其他":i)}</span>`).join("")}</td>
     <td class="t">${link(t)?`<a href="${esc(link(t))}" target="_blank" rel="noopener">${esc(t.title)}</a>`:`<strong>${esc(t.title)}</strong><span class="sub">原始公告連結整理中，下次更新會補上</span>`}${t.category?`<span class="sub">${esc(t.category)}</span>`:""}</td>
-    <td class="n num">${fmt(t.date)}</td>
+    <td class="n num">${t.pub_date?fmt(t.date):`<span class="muted" title="尚未取得採購網公告日，暫以收錄日期顯示">${fmt(t.date)}*</span>`}</td>
     <td class="n num">${dl(t)}</td>
     <td>${esc(t.method||t.type)}</td>
     <td>${esc(t.contact)}</td>

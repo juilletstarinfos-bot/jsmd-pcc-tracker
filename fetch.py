@@ -54,6 +54,7 @@ def normalize(rec):
 
 # 對照「標案記錄」表格的欄位：用關鍵字比對 API 詳細資料的欄位名稱（欄位名稱是「區塊:欄位」形式）
 DETAIL_FIELDS = {
+    "pub_date": ["公告日"],          # 採購網上的公告日（民國年），不是我們抓到的日期
     "deadline": ["截止投標"],
     "method": ["招標方式"],
     "contact": ["聯絡人"],
@@ -69,6 +70,10 @@ DETAIL_FIELDS = {
 
 
 def pick(detail, needles):
+    for n in needles:                      # 先找欄位名稱完全相同的，再找包含的
+        for k, v in detail.items():
+            if k.split(":")[-1] == n and v not in (None, "", []):
+                return v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
     for n in needles:
         for k, v in detail.items():
             if n in k.split(":")[-1] and v not in (None, "", []):
@@ -113,10 +118,15 @@ def enrich(t):
     if not recs:
         return
     detail = recs[-1].get("detail") or {}
+    if not getattr(enrich, "_logged", False):   # 印一次含「日」的欄位名稱，方便核對
+        enrich._logged = True
+        print("  欄位樣本：", [k for k in detail if "日" in k][:15], file=sys.stderr)
     for f, needles in DETAIL_FIELDS.items():
         t[f] = pick(detail, needles)
     t["doc_buy"] = doc_buy(t)
     t["deadline"] = roc_date(t.get("deadline"))
+    pd = roc_date(t.get("pub_date"))
+    t["pub_date"] = pd[:8] if pd and str(pd)[:8].isdigit() else None
     if detail.get("url"):
         t["pcc_url"] = detail["url"]
     time.sleep(0.5)
@@ -153,7 +163,7 @@ def main():
             t = normalize(r)
             t["industries"] = classify(t, rules)
             old = existing.get(t["id"])
-            if old and "doc_fee" in old:           # 已抓過詳細資料就沿用
+            if old and "pub_date" in old:          # 已抓過詳細資料就沿用
                 t.update({k: old.get(k) for k in [*DETAIL_FIELDS, "pcc_url", "doc_buy"]})
             elif t["industries"] != ["未分類"]:
                 todo.append(t)
